@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<title>WIP Shortage Snapshot — Reference Guide</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  --font-body: 'IBM Plex Sans', -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SF Mono', monospace;
+  --ink: #1a1a2e;
+  --paper: #fafaf8;
+  --accent: #c0392b;
+  --accent-light: #fdecea;
+  --blue: #2563eb;
+  --blue-light: #eff6ff;
+  --amber: #d97706;
+  --amber-light: #fffbeb;
+  --green: #16a34a;
+  --green-light: #f0fdf4;
+  --gray: #6b7280;
+  --gray-light: #f3f4f6;
+  --border: #e5e7eb;
+  --shadow: 0 1px 3px rgba(0,0,0,.08);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--ink);
+  background: var(--paper);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+h1 {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+}
+
+h1 span {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.intro {
+  font-size: 15px;
+  color: #444;
+  margin: 12px 0 32px;
+  border-left: 3px solid var(--accent);
+  padding-left: 16px;
+}
+
+h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-top: 48px;
+  margin-bottom: 16px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--ink);
+  letter-spacing: -0.3px;
+}
+
+h3 {
+  font-size: 15px;
+  font-weight: 700;
+  margin-top: 28px;
+  margin-bottom: 8px;
+}
+
+p { margin-bottom: 12px; }
+
+code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--gray-light);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px 20px;
+  margin: 12px 0;
+  box-shadow: var(--shadow);
+}
+
+.card h4 {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card p { margin-bottom: 6px; font-size: 13px; }
+.card p:last-child { margin-bottom: 0; }
+
+.tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.tag-blind { background: var(--accent-light); color: var(--accent); }
+.tag-order { background: var(--blue-light); color: var(--blue); }
+.tag-stock { background: var(--amber-light); color: var(--amber); }
+.tag-phantom { background: var(--gray-light); color: var(--gray); }
+.tag-complete { background: var(--green-light); color: var(--green); }
+.tag-blocked { background: #fff3e0; color: #e65100; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin: 12px 0;
+}
+
+th {
+  text-align: left;
+  font-weight: 600;
+  padding: 8px 10px;
+  background: var(--gray-light);
+  border: 1px solid var(--border);
+  font-size: 12px;
+}
+
+td {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  vertical-align: top;
+}
+
+td code { font-size: 11px; }
+
+.source-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+@media (max-width: 640px) {
+  .source-grid { grid-template-columns: 1fr; }
+}
+
+.source-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+}
+
+.source-card h4 {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+  color: var(--accent);
+}
+
+.source-card p {
+  font-size: 12px;
+  margin-bottom: 4px;
+  color: #555;
+}
+
+.icon-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 8px 0;
+}
+
+.icon-row .icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  width: 24px;
+  text-align: center;
+}
+
+.icon-row .desc {
+  font-size: 13px;
+}
+
+.toc {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px 20px;
+  margin: 20px 0 32px;
+  box-shadow: var(--shadow);
+}
+
+.toc h4 {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--gray);
+  margin-bottom: 8px;
+}
+
+.toc ol {
+  padding-left: 20px;
+  font-size: 13px;
+}
+
+.toc li {
+  margin-bottom: 3px;
+}
+
+.toc a {
+  color: var(--blue);
+  text-decoration: none;
+}
+
+.toc a:hover { text-decoration: underline; }
+
+hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 32px 0;
+}
+
+@media print {
+  body { padding: 12px; max-width: 100%; font-size: 11px; }
+  h1 { font-size: 20px; }
+  h2 { font-size: 15px; margin-top: 24px; }
+  .source-grid { grid-template-columns: 1fr 1fr; }
+  .card, .source-card, .toc { box-shadow: none; }
+}
+</style>
+</head>
+<body>
+
+<h1>
+  <span>Reference Guide</span>
+  WIP Shortage Snapshot
+</h1>
+
+<p class="intro">
+  This document explains how to read the WIP Shortage Snapshot report, what each section and status means, and where the data comes from. Keep this alongside your printed report during floor walks.
+  <br><strong>Applies to report version 0.1.0</strong> &mdash; check the version in your report header to confirm this guide matches.
+</p>
+
+<div class="toc">
+  <h4>Contents</h4>
+  <ol>
+    <li><a href="#basics">Quick Reference &amp; Terminology</a></li>
+    <li><a href="#sources">Data Sources</a></li>
+    <li><a href="#header">Report Header &amp; Summary</a></li>
+    <li><a href="#jocard">Reading a JO Card</a></li>
+    <li><a href="#sections">Report Sections</a></li>
+    <li><a href="#statuses">BOM Line Statuses</a></li>
+    <li><a href="#columns">Table Columns</a></li>
+    <li><a href="#icons">Icons &amp; Annotations</a></li>
+    <li><a href="#assemblies">Assemblies &amp; Internal JOs</a></li>
+    <li><a href="#kitting">Kitting Status</a></li>
+    <li><a href="#shortfall">System-Wide Shortfall</a></li>
+    <li><a href="#jira">Jira Requisition Statuses</a></li>
+    <li><a href="#limitations">Known Limitations</a></li>
+  </ol>
+</div>
+
+<h2 id="basics">1. Quick Reference &amp; Terminology</h2>
+
+<table>
+  <thead>
+    <tr><th>Term</th><th>Meaning</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>W JO</strong> (e.g., W9715)</td><td>A <strong>W</strong>ork Order &mdash; a customer production job. These are the primary focus of the report.</td></tr>
+    <tr><td><strong>I JO</strong> (e.g., I4926)</td><td>An <strong>I</strong>nternal Job Order &mdash; builds assemblies or stock. Not directly for a customer.</td></tr>
+    <tr><td><strong>BOM</strong></td><td>Bill of Materials &mdash; the list of parts needed for a JO.</td></tr>
+    <tr><td><strong>Blind Spot</strong></td><td>A BOM line with no plan: not kitted, no PO, no requisition. The core problem this report surfaces.</td></tr>
+    <tr><td><strong>A-prefix part</strong> (e.g., A8800-004)</td><td>An assembly part, typically built by an I JO.</td></tr>
+    <tr><td><strong>Phantom / Shop Supply</strong></td><td>Consumable parts (fittings, screws, etc.) consumed from bulk inventory, never formally issued to JOs. Identified by M2M <code>fgroup = "SUPPLY"</code> or <code>fprodcl = "SS"</code>.</td></tr>
+    <tr><td><strong>PO</strong></td><td>Purchase Order in M2M.</td></tr>
+    <tr><td><strong>Sys PO</strong></td><td>System-wide PO &mdash; an open PO for a part anywhere in M2M, regardless of which JO it's routed to. May be routed to inventory, another JO, or an SO.</td></tr>
+    <tr><td><strong>&mdash;</strong> (dash)</td><td>No data / zero / not applicable. Used in POs, Sys POs, and On Hand columns when there's nothing to show.</td></tr>
+    <tr><td><strong>Negative "Have"</strong></td><td>The M2M qty-issued field (<code>fqty_iss</code>) can go negative due to returns or adjustments. This is a data quality issue in M2M, displayed as-is.</td></tr>
+    <tr><td><strong>Snapshot #</strong></td><td>Sequential run counter. Each time the collector runs, it creates a new snapshot. Compare snapshots over time to see if shortages are improving or worsening.</td></tr>
+  </tbody>
+</table>
+
+<h3>Section Header Colors (on screen)</h3>
+<p>On screen, section headers are color-coded for quick scanning:</p>
+<ul style="padding-left: 20px; margin: 8px 0;">
+  <li><strong style="color: #d97706;">Amber</strong> &mdash; System-Wide Shortfall</li>
+  <li><strong style="color: #dc2626;">Red</strong> &mdash; Blind Spots &amp; Blocked Assemblies</li>
+  <li><strong style="color: #ea580c;">Orange</strong> &mdash; Requisitioned</li>
+  <li><strong style="color: #6b7280;">Gray</strong> &mdash; Stock Available</li>
+</ul>
+
+<h2 id="sources">2. Data Sources</h2>
+
+<p>The report cross-references six independent systems. No single source is the "truth" &mdash; each has its own blind spots. The report surfaces where they agree and where they disagree or have gaps.</p>
+
+<div class="source-grid">
+  <div class="source-card">
+    <h4>Made2Manage (M2M)</h4>
+    <p><strong>What:</strong> ERP system of record. Job Orders (JOMAST), BOMs (JODBOM), Purchase Orders (POMAST/POITEM), Inventory (INMASTX/INONHD), Routing (JODRTG).</p>
+    <p><strong>Via:</strong> <code>m2m-graphql-us.wasson.tech</code> GraphQL API</p>
+    <p><strong>Provides:</strong> BOM demand, qty issued, direct-to-JO POs, part metadata (group, product class), on-hand inventory, routing/work centers.</p>
+  </div>
+
+  <div class="source-card">
+    <h4>System POs (Redbook-style)</h4>
+    <p><strong>What:</strong> All open Purchase Orders in M2M for a given part number, regardless of which JO they're routed to.</p>
+    <p><strong>Via:</strong> <code>getPOItemsWhere</code> GraphQL query per blind-spot part</p>
+    <p><strong>Provides:</strong> System-wide PO coverage, overdue PO detection. Shown in the "Sys POs" column.</p>
+  </div>
+
+  <div class="source-card">
+    <h4>The Tool (Order Tracking)</h4>
+    <p><strong>What:</strong> Production tracking spreadsheet (<code>Order Tracking MASTER NEW.xlsx</code>). Maintained by production coordination.</p>
+    <p><strong>Via:</strong> Direct file read from <code>/Volumes/Documentation/</code></p>
+    <p><strong>Provides:</strong> Customer name, production phase, kitting notes, build schedule, quoted delivery (col S), order entry date (col Q), ship target.</p>
+  </div>
+
+  <div class="source-card">
+    <h4>Notion Travelers</h4>
+    <p><strong>What:</strong> Notion database with one page per JO tracking lifecycle from Pre-Sales through Shipping.</p>
+    <p><strong>Via:</strong> Notion REST API</p>
+    <p><strong>Provides:</strong> Lifecycle status (Kitting, Production, Application, QC, etc.), Blocker text, Priority, Promised Ship Date. Also provides customer/project name as fallback.</p>
+  </div>
+
+  <div class="source-card">
+    <h4>Jira Purchasing (PUR)</h4>
+    <p><strong>What:</strong> Purchasing requisition tracking. Requisitions are submitted via email forwarding, with part details in PDF/XLSX attachments.</p>
+    <p><strong>Via:</strong> Jira REST API + attachment download &amp; parsing</p>
+    <p><strong>Provides:</strong> Open requisitions per JO (upgrades blind spots to "Requisitioned"), parsed line items from PDF req forms and XLSX kitting sheets.</p>
+  </div>
+
+  <div class="source-card">
+    <h4>Jira Attachment Parser</h4>
+    <p><strong>What:</strong> Extracts structured data from Jira attachment files.</p>
+    <p><strong>Formats parsed:</strong> Employee Req Form (fillable PDF), MRP Req Form (fillable PDF), Column Call-Out (text PDF), GC Ordering Sheet (XLSX), Post-WO Kitting (XLSX), Requisition Form (XLSX).</p>
+    <p><strong>Provides:</strong> Part-level req annotations on blind spots ("Req'd but not on PO").</p>
+  </div>
+</div>
+
+<h2 id="header">3. Report Header &amp; Summary</h2>
+
+<p>The report begins with a timestamp (America/Denver timezone), the snapshot number, and a summary metrics table:</p>
+
+<table>
+  <thead><tr><th>Metric</th><th>What it counts</th></tr></thead>
+  <tbody>
+    <tr><td><strong>W Job Orders</strong></td><td>Total released W-prefix JOs in M2M with status "RELEASED".</td></tr>
+    <tr><td><strong>BOM Lines</strong></td><td>Total BOM lines analyzed across all W JOs.</td></tr>
+    <tr><td><strong>Blind Spots</strong></td><td>BOM lines with no supply plan after all filtering (excludes phantom, stock-available, assemblies).</td></tr>
+    <tr><td><strong>Stock Available</strong></td><td>BOM lines where on-hand inventory could cover the gap but hasn't been kitted.</td></tr>
+    <tr><td><strong>Phantom</strong></td><td>Shop supply lines excluded from shortage counts.</td></tr>
+    <tr><td><strong>Requisitioned</strong></td><td>Blind spots upgraded because a Jira PUR requisition was found.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="jocard">4. Reading a JO Card</h2>
+
+<p>Each JO in the Blind Spots, Requisitioned, and Stock Available sections is displayed as a "card" with a header, metadata lines, and a BOM table:</p>
+
+<h3>Title Line</h3>
+<p><code>W9715 &mdash; CHEVRON - RICHMOND CA <span style="color:var(--accent)">Quoted Delivery: 2026-04-20</span></code></p>
+<ul style="padding-left: 20px; margin: 8px 0;">
+  <li><strong>W9715</strong> &mdash; The JO number (M2M <code>fjobno</code> with <code>-0000</code> suffix stripped).</li>
+  <li><strong>CHEVRON - RICHMOND CA</strong> &mdash; Customer name. Sources tried in order: The Tool's Company field &rarr; Notion Traveler name (with JO prefix stripped) &rarr; M2M <code>fdescript</code>. If all fail, you may see "GOODS" (M2M default).</li>
+  <li><strong style="color:var(--accent)">Quoted Delivery</strong> (in red) &mdash; The promised delivery date. From The Tool column S first, then Notion Promised Ship Date, then M2M <code>fddue_date</code>. May contain free-text from The Tool (e.g., "Bounced to", "End of Summer?").</li>
+</ul>
+
+<h3>Metadata Lines</h3>
+<p>Below the title, up to four lines of context from different sources:</p>
+<table>
+  <thead><tr><th>Field</th><th>Example</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Qty</strong></td><td><code>Qty: 1</code></td><td>M2M JO quantity</td></tr>
+    <tr><td><strong>Order Entry</strong></td><td><code>Order Entry: 2026-02-11</code></td><td>The Tool, column Q</td></tr>
+    <tr><td><strong>Priority</strong></td><td><code>Priority: High</code></td><td>Notion Travelers</td></tr>
+    <tr><td><strong>Notion</strong></td><td><code>Notion: Kitting</code></td><td>Notion Traveler lifecycle status</td></tr>
+    <tr><td><strong>Blocker</strong></td><td><code>Blocker: "Lag time is pushing out..."</code></td><td>Notion Traveler Blocker text field</td></tr>
+    <tr><td><strong>Tool</strong></td><td><code>Tool: Build</code></td><td>The Tool's parsed production phase (see below)</td></tr>
+    <tr><td><strong>Kit</strong></td><td><code>Kit: "Pump, Canister inserts"</code></td><td>The Tool, column H (Kitting Status Notes)</td></tr>
+    <tr><td><strong>Last part</strong></td><td><code>Last part: ETA 4/21/26</code> or <code>Last part: 46077</code></td><td>The Tool, column "Last Part Due". May contain an ETA date, a PO number, or free-text.</td></tr>
+    <tr><td><strong>Ship target</strong></td><td><code>Ship target: APR</code></td><td>The Tool, column R ("Will Ship in Current Month"). Free-text &mdash; may show multiple crossed-out months.</td></tr>
+    <tr><td><strong>Jira</strong></td><td><code>Jira: PUR-5844</code></td><td>Jira PUR issue key(s) that matched this JO. May list multiple.</td></tr>
+  </tbody>
+</table>
+
+<h3>Tool Production Phases</h3>
+<p>The <code>Tool:</code> field shows the current production phase parsed from The Tool's Status column (free-text). Values:</p>
+<table>
+  <thead><tr><th>Phase</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Planning</strong></td><td>Production planning, not yet on floor</td></tr>
+    <tr><td><strong>Engineering</strong></td><td>In engineering / design</td></tr>
+    <tr><td><strong>Build</strong></td><td>On the production floor, being built</td></tr>
+    <tr><td><strong>Lab/QC</strong></td><td>In lab testing or quality control</td></tr>
+    <tr><td><strong>Final QC</strong></td><td>QC sign-off stage</td></tr>
+    <tr><td><strong>FAT</strong></td><td>Factory Acceptance Test &mdash; customer-witnessed testing at the facility</td></tr>
+    <tr><td><strong>Pre-Ship</strong></td><td>Packaged or ready for shipment</td></tr>
+    <tr><td><strong>Hold/Rework</strong></td><td>On hold, bounced from QC, or waiting on a decision</td></tr>
+  </tbody>
+</table>
+
+<h3>Summary Counts Line</h3>
+<p><code>6 blind spots, 3 assy NO IJO, 43 stock avail, 4 phantom, 7 on order, 4 complete, 1 assy in-prog</code></p>
+<p>This line tallies all BOM lines by status. Abbreviations used:</p>
+<table>
+  <thead><tr><th>Abbreviation</th><th>Full status</th></tr></thead>
+  <tbody>
+    <tr><td><code>blind spots</code></td><td>BLIND_SPOT</td></tr>
+    <tr><td><code>stock avail</code></td><td>STOCK_AVAILABLE</td></tr>
+    <tr><td><code>phantom</code></td><td>PHANTOM (shop supply)</td></tr>
+    <tr><td><code>on order</code></td><td>ON_ORDER</td></tr>
+    <tr><td><code>complete</code></td><td>COMPLETE</td></tr>
+    <tr><td><code>requisitioned</code></td><td>REQUISITIONED</td></tr>
+    <tr><td><code>assy BLOCKED</code></td><td>MAKE_BLOCKED &mdash; assembly's I JO has blind spots</td></tr>
+    <tr><td><code>assy NO IJO</code></td><td>MAKE_NO_JO &mdash; no I JO found for assembly</td></tr>
+    <tr><td><code>assy in-prog</code></td><td>MAKE_IN_PROGRESS &mdash; I JO in progress, no blind spots</td></tr>
+    <tr><td><code>assy done</code></td><td>MAKE_COMPLETE &mdash; I JO fully complete</td></tr>
+  </tbody>
+</table>
+
+<h2 id="sections">5. Report Sections</h2>
+
+<p>JOs appear in exactly one section, prioritized from most urgent to least:</p>
+
+<table>
+  <thead>
+    <tr><th>Section</th><th>What it means</th><th>Action needed</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>System-Wide Shortfall</strong></td>
+      <td>Parts where total open demand across ALL JOs exceeds all known supply (direct POs + system POs + on-hand inventory).</td>
+      <td>These parts need purchasing attention regardless of individual JO status. One PO could clear multiple JOs.</td>
+    </tr>
+    <tr>
+      <td><strong>Blind Spots &amp; Blocked Assemblies</strong></td>
+      <td>JOs with BOM lines that have no plan: no kitting, no PO, no requisition. Also includes JOs blocked by I JO assembly shortages.</td>
+      <td>Highest priority. Each line needs a decision: order it, kit from stock, or escalate.</td>
+    </tr>
+    <tr>
+      <td><strong>Requisitioned</strong></td>
+      <td>JOs where all blind spots matched to an open Jira PUR requisition (not yet Confirmed).</td>
+      <td>Follow up with purchasing &mdash; req exists but PO may not have been created yet.</td>
+    </tr>
+    <tr>
+      <td><strong>Stock Available (needs kitting)</strong></td>
+      <td>JOs where all shortages could be covered by existing on-hand inventory.</td>
+      <td>These are kitting issues, not supply issues. Parts exist in inventory but haven't been transferred to the JO.</td>
+    </tr>
+    <tr>
+      <td><strong>On Order</strong></td>
+      <td>JOs where all shortages are covered by existing POs (direct-to-JO).</td>
+      <td>Monitor PO delivery dates. No action unless POs are overdue.</td>
+    </tr>
+    <tr>
+      <td><strong>No Action Needed</strong></td>
+      <td>All BOM lines are complete, overissued, phantom, or assembly-done.</td>
+      <td>None &mdash; materials are covered.</td>
+    </tr>
+    <tr>
+      <td><strong>Internal Job Orders (Assemblies)</strong></td>
+      <td>I JOs that are referenced by W JOs for assembly parts (A-prefix). Shows their own BOM shortage status.</td>
+      <td>If blocked (🔴), the parent W JO can't complete until the I JO's shortages are resolved.</td>
+    </tr>
+    <tr>
+      <td><strong>Stock Build I JOs</strong></td>
+      <td>I JOs building to inventory &mdash; not tied to a specific W JO but have unresolved shortages.</td>
+      <td>Lower priority but affects future availability. These build inventory buffers.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="statuses">6. BOM Line Statuses</h2>
+
+<div class="card">
+  <h4><span class="tag tag-complete">COMPLETE</span></h4>
+  <p>Total supplied (qty issued + PO received) meets or exceeds the extended quantity needed. No action required.</p>
+</div>
+
+<div class="card">
+  <h4><span class="tag tag-order">ON_ORDER</span></h4>
+  <p>A PO exists routed directly to this JO and the ordered quantity (including what's still in transit) covers the gap. Waiting on delivery.</p>
+</div>
+
+<div class="card">
+  <h4><span class="tag tag-order">PARTIAL</span></h4>
+  <p>A PO exists but doesn't fully cover the gap. Some quantity is on order, but more is needed.</p>
+</div>
+
+<div class="card">
+  <h4><span class="tag tag-blind">BLIND_SPOT</span></h4>
+  <p>Nothing accounts for this part: not kitted, no PO routed to this JO, no requisition found. This is the core problem the report is designed to surface.</p>
+</div>
+
+<div class="card">
+  <h4><span class="tag tag-blind">REQUISITIONED</span></h4>
+  <p>Was a blind spot, but an open Jira PUR requisition was found that references this JO. The req exists but purchasing may not have created a PO yet.</p>
+</div>
+
+<div class="card">
+  <h4><span class="tag tag-stock">STOCK_AVAILABLE</span></h4>
+  <p>A blind spot where on-hand inventory (from INMASTX.INONHD) could cover the gap. The parts exist in the warehouse but haven't been issued/transferred to this JO. This is a kitting problem, not a supply problem.</p>
+</div>
+
+<div class="card">
+  <h4><span class="tag tag-phantom">PHANTOM</span></h4>
+  <p>Shop supply / consumable part (INMASTX <code>fgroup = "SUPPLY"</code> or <code>fprodcl = "SS"</code>). These are consumed from bulk inventory and reconciled quarterly &mdash; they are never formally issued to individual JOs. Not a real shortage.</p>
+</div>
+
+<div class="card">
+  <h4><span class="tag tag-blocked">MAKE_BLOCKED</span></h4>
+  <p>This is an assembly part (A-prefix) with a corresponding I JO that has its own blind spots. The parent W JO is blocked until the I JO's shortages are resolved. A cascading shortage.</p>
+</div>
+
+<div class="card">
+  <h4><span class="tag tag-blocked">MAKE_NO_JO</span></h4>
+  <p>An assembly part (A-prefix) with no corresponding released I JO found in the system. Either the I JO hasn't been created, or it's in a different status.</p>
+</div>
+
+<div class="card">
+  <h4><span class="tag tag-complete">MAKE_COMPLETE</span></h4>
+  <p>Assembly part whose I JO has all BOM lines complete.</p>
+</div>
+
+<div class="card">
+  <h4><span class="tag tag-order">MAKE_IN_PROGRESS</span></h4>
+  <p>Assembly part whose I JO is in progress &mdash; has on-order or stock-available items but no blind spots.</p>
+</div>
+
+<div class="card">
+  <h4><span class="tag tag-complete">OVERISSUED</span></h4>
+  <p>More has been supplied (issued + received) than the extended quantity requires. May indicate a data quality issue or intentional overage.</p>
+</div>
+
+<h2 id="columns">7. Table Columns</h2>
+
+<table>
+  <thead>
+    <tr><th>Column</th><th>Meaning</th><th>Source</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Part</strong></td><td>Wasson part number (<code>fbompart</code>)</td><td>M2M JODBOM</td></tr>
+    <tr><td><strong>Description</strong></td><td>Part description, truncated to 30 characters</td><td>M2M JODBOM</td></tr>
+    <tr><td><strong>Need</strong></td><td>Extended quantity: JO quantity &times; BOM per-unit quantity (<code>fquantity &times; factqty</code>)</td><td>M2M JODBOM + JOMAST</td></tr>
+    <tr><td><strong>Have</strong></td><td>Total supplied: qty issued from inventory (<code>fqty_iss</code>) + qty received on direct-to-JO POs (<code>&Sigma; POItem.frcpqty</code>)</td><td>M2M JODBOM + POITEM</td></tr>
+    <tr><td><strong>Gap</strong></td><td><code>Need - Have - (direct-to-JO PO qty still in transit)</code>. "Still On Order" only counts POs routed directly to this JO, NOT system-wide POs. If positive, this quantity has no plan at the JO level. Check Sys POs and On Hand columns for broader context.</td><td>Calculated</td></tr>
+    <tr><td><strong>POs</strong></td><td>PO numbers routed directly to this JO + BOM item (via <code>fjokey</code> + <code>fjoitm</code>). Shows "&mdash;" if none.</td><td>M2M POITEM (direct)</td></tr>
+    <tr><td><strong>Sys POs</strong></td><td>Total open PO quantity for this part <em>anywhere in the system</em> (all JOs, inventory, SOs). Includes <strong>OVERDUE</strong> flag if past due date.</td><td>M2M POITEM (system-wide)</td></tr>
+    <tr><td><strong>On Hand</strong></td><td>Total on-hand inventory for this part across all locations.</td><td>M2M INMASTX &rarr; INONHD</td></tr>
+  </tbody>
+</table>
+
+<h2 id="icons">8. Icons &amp; Annotations</h2>
+
+<div class="icon-row">
+  <span class="icon">&#x26A0;&#xFE0F;</span>
+  <div class="desc"><strong>Overdue PO</strong> &mdash; A PO where the required/promise date has passed but quantity remains open. Format: <code>PO 051356 &rarr; INV (WIL001) 30 open, 8d overdue</code>
+    <ul style="margin: 4px 0 0 16px; font-size: 12px;">
+      <li><code>051356</code> &mdash; M2M PO number</li>
+      <li><code>&rarr; INV</code> &mdash; Destination: <code>INV</code> = inventory, <code>W####</code> = a specific JO, <code>SO</code> = a sales order</li>
+      <li><code>(WIL001)</code> &mdash; M2M vendor code (e.g., WIL001 = Wilmad/Wilson)</li>
+      <li><code>30 open</code> &mdash; Qty ordered minus qty received</li>
+      <li><code>8d overdue</code> &mdash; Days past the due/promise date</li>
+    </ul>
+  </div>
+</div>
+
+<div class="icon-row">
+  <span class="icon">&#x1F4CB;</span>
+  <div class="desc"><strong>Req'd but not on PO</strong> &mdash; A parsed Jira req attachment contains this part number, but no system PO exists. Format: <code>PUR-5789 (PO Sent) 5ea&rarr;INV</code>
+    <ul style="margin: 4px 0 0 16px; font-size: 12px;">
+      <li><code>PUR-5789</code> &mdash; Jira issue key</li>
+      <li><code>(PO Sent)</code> &mdash; Current Jira workflow status (see Section 12)</li>
+      <li><code>5ea</code> &mdash; Quantity from the parsed attachment</li>
+      <li><code>&rarr;INV</code> &mdash; Destination from the req form (<code>INV</code>, a JO number, or free-text like <code>WO yet to exist</code>)</li>
+    </ul>
+    <em>Only shown when there are no system POs for the part. "Confirmed" reqs are excluded (historical).</em>
+  </div>
+</div>
+
+<div class="icon-row">
+  <span class="icon">&#x1F534;</span>
+  <div class="desc"><strong>BLOCKED</strong> (on assembly lines) &mdash; This assembly part's I JO has its own blind spots. Shows the I JO number, completion percentage, and blind spot count. See the "Internal Job Orders" section for detail.</div>
+</div>
+
+<div class="icon-row">
+  <span class="icon">&#x1F534;</span>
+  <div class="desc"><strong>No I JO found</strong> (on assembly lines) &mdash; This A-prefix part has no released internal Job Order building it.</div>
+</div>
+
+<h3>I JO Header Icons</h3>
+<p>In the "Internal Job Orders" and "Stock Build I JOs" sections, each I JO header has a traffic-light emoji:</p>
+<div class="icon-row">
+  <span class="icon">&#x1F534;</span>
+  <div class="desc"><strong>Red circle</strong> &mdash; This I JO has blind spots. It's blocked and can't complete until shortages are resolved.</div>
+</div>
+<div class="icon-row">
+  <span class="icon">&#x1F7E1;</span>
+  <div class="desc"><strong>Yellow circle</strong> &mdash; This I JO has no blind spots but has items in progress (on order, stock available, etc.). It's moving forward.</div>
+</div>
+
+<h2 id="assemblies">9. Assemblies &amp; Internal JOs</h2>
+
+<p>Parts starting with <strong>"A"</strong> are assemblies. They may be built by internal Job Orders (I-prefix, e.g., <code>I4926</code>). The report evaluates each I JO's BOM the same way it evaluates W JOs:</p>
+
+<ul style="padding-left: 20px; margin: 12px 0;">
+  <li>If the I JO's BOM is fully complete &rarr; the assembly line on the W JO is <span class="tag tag-complete">MAKE_COMPLETE</span></li>
+  <li>If the I JO has items on order but no blind spots &rarr; <span class="tag tag-order">MAKE_IN_PROGRESS</span></li>
+  <li>If the I JO has its own blind spots &rarr; <span class="tag tag-blocked">MAKE_BLOCKED</span> (cascading shortage)</li>
+  <li>If no released I JO exists for the part &rarr; <span class="tag tag-blocked">MAKE_NO_JO</span></li>
+</ul>
+
+<p>The <strong>"Internal Job Orders (Assemblies)"</strong> section at the end of the report shows detail for each I JO referenced by a W JO. The <strong>"Stock Build I JOs"</strong> section shows I JOs building to inventory that aren't tied to a specific W JO.</p>
+
+<h2 id="kitting">10. Kitting Status</h2>
+
+<p>Internal Job Orders may have a <strong>KITTING</strong> work center in their M2M routing (JODRTG). An I JO cannot move to the production floor until kitting is complete. The report shows:</p>
+
+<div class="icon-row">
+  <span class="icon">&#x2B1C;</span>
+  <div class="desc"><strong>Kitting: Not Started</strong> &mdash; The kitting operation has zero quantity completed. Shows how many are to-go.</div>
+</div>
+
+<div class="icon-row">
+  <span class="icon">&#x1F7E8;</span>
+  <div class="desc"><strong>Kitting: In Progress</strong> &mdash; Some quantity has been kitted, but more remains. Shows completed and to-go counts.</div>
+</div>
+
+<div class="icon-row">
+  <span class="icon">&#x2705;</span>
+  <div class="desc"><strong>Kitting: Complete</strong> &mdash; All required quantity has been kitted. The I JO can proceed to production.</div>
+</div>
+
+<p>W Job Orders typically do not have a KITTING routing operation &mdash; their kitting is managed by MRP outside of the routing workflow.</p>
+
+<h2 id="shortfall">11. System-Wide Shortfall</h2>
+
+<p>The "System-Wide Shortfall" table at the top of the report takes a different view from the per-JO analysis. It aggregates <strong>all open demand</strong> for each part across every JO and compares it against <strong>all known supply</strong>:</p>
+
+<p><code>Shortfall = Open Need &minus; Direct POs &minus; System POs &minus; On Hand</code></p>
+
+<table>
+  <thead>
+    <tr><th>Column</th><th>Meaning</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Open Need</strong></td><td>Sum of (extended qty &minus; qty issued &minus; PO received) across all JOs where this part is short. Excludes phantom, make, and complete lines.</td></tr>
+    <tr><td><strong>Direct PO</strong></td><td>Sum of qty still on order on POs routed directly to JOs.</td></tr>
+    <tr><td><strong>Sys PO</strong></td><td>Open qty on system-wide POs (may overlap with Direct PO for parts ordered to inventory).</td></tr>
+    <tr><td><strong>On Hand</strong></td><td>Current on-hand inventory.</td></tr>
+    <tr><td><strong>Shortfall</strong></td><td>The gap after accounting for all supply. If positive, there is no way to cover all demand from existing stock and orders.</td></tr>
+  </tbody>
+</table>
+
+<p><strong>Note:</strong> Direct PO and Sys PO may overlap for parts ordered to inventory &mdash; the same PO could appear in both columns. The shortfall number may therefore be conservative (actual shortfall could be slightly higher). Use it as a directional indicator, not a precise count.</p>
+
+<p>A single PO for a high-shortfall part can clear blind spots on many JOs simultaneously.</p>
+
+<h2 id="jira">12. Jira Requisition Statuses</h2>
+
+<p>Jira PUR requisitions move through a workflow. The report shows the current status in annotations and the Requisitioned section:</p>
+
+<table>
+  <thead><tr><th>Status</th><th>Category</th><th>What it means</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Requisition Received</strong></td><td>To Do</td><td>Req just arrived. Purchasing hasn't started working on it.</td></tr>
+    <tr><td><strong>Under review</strong></td><td>To Do</td><td>Requisition is awaiting approval for funds.</td></tr>
+    <tr><td><strong>Awaiting MRP approval</strong></td><td>In Progress</td><td>Req needs MRP manager sign-off before purchasing can proceed.</td></tr>
+    <tr><td><strong>To Do</strong></td><td>To Do</td><td>Approved for PO creation, but purchasing hasn't created it yet.</td></tr>
+    <tr><td><strong>PO Sent</strong></td><td>In Progress</td><td>PO has been sent to the vendor. Note: the PO may not yet appear in M2M, or it may be routed to inventory (invisible at JO level). If you see "Req'd but not on PO" with status "PO Sent", check whether the PO was entered into M2M.</td></tr>
+    <tr><td><strong>Confirmed</strong></td><td>Done</td><td>Req is complete &mdash; PO was created, sent, and confirmed. <em>Excluded from the report</em> (treated as historical).</td></tr>
+    <tr><td><strong>Rejected</strong></td><td>Done</td><td>Req was rejected. Excluded from the report.</td></tr>
+  </tbody>
+</table>
+
+<p><strong>Why "PO Sent" shows as "Req'd but not on PO":</strong> The annotation checks M2M for open POs matching the part number. If the PO was routed to inventory (blank <code>fjokey</code>) and filtered by the system PO query, it should show in Sys POs instead. If you see both "PO Sent" and no Sys PO, the PO may not have been entered into M2M yet, or it was entered under a different part number/revision.</p>
+
+<h2 id="limitations">13. Known Limitations</h2>
+
+<div class="card">
+  <h4>Inventory-routed POs are invisible at the JO level</h4>
+  <p>When parts are ordered into general inventory (blank <code>fjokey</code>), the link between the PO and the JO it was meant for is lost. The "Sys POs" column partially compensates by showing system-wide open POs, but we can't tell which JO a system PO was intended for. The Jira req parser helps reconstruct intent from attachment data.</p>
+</div>
+
+<div class="card">
+  <h4>On-hand inventory may be committed elsewhere</h4>
+  <p><code>STOCK_AVAILABLE</code> means on-hand qty exists, but that stock may already be earmarked for other JOs. The report cannot see M2M allocations.</p>
+</div>
+
+<div class="card">
+  <h4>Jira requisition matching is text-based</h4>
+  <p>JO numbers are extracted from Jira issue summaries, descriptions, and parsed attachments via regex. Some requisitions may not mention the JO number, and false matches are possible. "Confirmed" status requisitions are excluded as historical.</p>
+</div>
+
+<div class="card">
+  <h4>Phantom detection relies on part metadata</h4>
+  <p>Parts are classified as phantom/shop supply based on <code>fgroup = "SUPPLY"</code> or <code>fprodcl = "SS"</code> in INMASTX. If a part isn't tagged correctly in M2M, it won't be filtered.</p>
+</div>
+
+<div class="card">
+  <h4>The Tool's quoted delivery is free-text</h4>
+  <p>Column S in the Order Tracking spreadsheet sometimes contains dates, sometimes narrative text (e.g., "Bounced to", "End of Summer?"). The report displays whatever is in the field.</p>
+</div>
+
+<div class="card">
+  <h4>Data sources may conflict</h4>
+  <p>Notion might say "Production" while The Tool says "Lab/QC". The report shows both without resolving the conflict &mdash; use your judgment to determine which is current.</p>
+</div>
+
+<hr>
+
+<p style="font-size: 12px; color: var(--gray); text-align: center;">
+  WIP Shortage Snapshot v0.1.0 &mdash; Built for Wasson-ECE floor walks<br>
+  Report generated by <code>make all</code> &middot; Help: <code>help.html</code> &middot; Data: <code>data/mrp.db</code>
+</p>
+
+</body>
+</html>

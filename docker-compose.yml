@@ -1,0 +1,55 @@
+networks:
+  wip:
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "${WIP_PORT:-8323}:80"
+    volumes:
+      - ./reports:/srv:ro
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    networks:
+      - wip
+
+  wip-snapshot:
+    build: .
+    env_file: .env
+    volumes:
+      # SQLite database + Jira attachment cache (persist between runs)
+      - ./data:/app/data
+      # Published reports (serve this directory with a webserver)
+      - ./reports:/app/reports
+      # The Tool spreadsheet (read-only, adjust path for your server)
+      - ${TOOL_VOLUME:-/Volumes/Documentation}:/mnt/documentation:ro
+    environment:
+      # Override TOOL_PATH to use the container mount point
+      - TOOL_PATH=/mnt/documentation/ProductionTool/Master Document/Order Tracking MASTER NEW.xlsx
+
+  # Optional: run on a daily schedule
+  wip-snapshot-cron:
+    build: .
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+      - ./reports:/app/reports
+      - ${TOOL_VOLUME:-/Volumes/Documentation}:/mnt/documentation:ro
+    environment:
+      - TOOL_PATH=/mnt/documentation/ProductionTool/Master Document/Order Tracking MASTER NEW.xlsx
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "WIP Snapshot cron: running daily at 6:00 AM Denver time"
+        while true; do
+          NEXT=$$(TZ=America/Denver date -d 'tomorrow 06:00' +%s 2>/dev/null || echo 0)
+          NOW=$$(date +%s)
+          SLEEP=$$((NEXT - NOW))
+          if [ "$$SLEEP" -lt 0 ] || [ "$$SLEEP" -gt 86400 ]; then SLEEP=86400; fi
+          echo "Next run in $${SLEEP}s"
+          sleep $$SLEEP
+          echo "=== Running WIP Snapshot at $$(TZ=America/Denver date) ==="
+          make all publish
+          echo "=== Done ==="
+        done
+    restart: unless-stopped

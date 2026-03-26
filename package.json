@@ -1,0 +1,23 @@
+{
+  "name": "mrp-wip-snapshot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "collect": "yarn tsx src/collect.ts",
+    "collect:verbose": "yarn tsx src/collect.ts --verbose"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.0.0",
+    "dotenv": "^16.4.0",
+    "pdfjs-dist": "^5.5.207",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.0",
+    "@types/node": "^22.0.0",
+    "marked": "^17.0.5",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

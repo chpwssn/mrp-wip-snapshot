@@ -1,0 +1,16 @@
+node_modules/
+dist/
+data/
+data/attachments/
+reports/
+.env
+*.db
+*.db-journal
+*.db-wal
+.DS_Store
+.pnp.cjs
+.pnp.loader.mjs
+.yarn/unplugged/
+.yarn/install-state.gz
+report.md
+report.html
