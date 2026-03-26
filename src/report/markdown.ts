@@ -379,10 +379,20 @@ function writeJoSection(
   w('');
 
   // BOM line table
-  w(`| Part | Description | Need | Have | Gap | POs | Sys POs | On Hand |`);
-  w(`|------|-------------|------|------|-----|-----|---------|---------|`);
+  w(`| Part | Description | Need | Have | Gap | Status | POs | Sys POs | On Hand |`);
+  w(`|------|-------------|------|------|-----|--------|-----|---------|---------|`);
 
-  const filteredLines = jo.bomLines.filter(l => statusList.includes(l.status));
+  // Show all lines that need action, not just the section's primary status
+  const filteredLines = jo.bomLines.filter(l =>
+    l.status === BomLineStatus.BLIND_SPOT ||
+    l.status === BomLineStatus.REQUISITIONED ||
+    l.status === BomLineStatus.STOCK_AVAILABLE ||
+    l.status === BomLineStatus.ON_ORDER ||
+    l.status === BomLineStatus.PARTIAL ||
+    l.status === BomLineStatus.MAKE_BLOCKED ||
+    l.status === BomLineStatus.MAKE_NO_JO ||
+    l.status === BomLineStatus.MAKE_IN_PROGRESS,
+  );
   for (const line of filteredLines) {
     const directPos = line.poNumbers.length > 0 ? line.poNumbers.join(', ') : '—';
     const sys = (line as any).systemPo as SystemPo | undefined;
@@ -393,7 +403,8 @@ function writeJoSection(
     }
     const onHand = line.onHandQty > 0 ? String(line.onHandQty) : '—';
 
-    w(`| ${line.fbompart} | ${(line.fbomdesc || '').slice(0, 30)} | ${line.extendedQty} | ${line.totalSupplied} | ${line.gap} | ${directPos} | ${sysPoStr} | ${onHand} |`);
+    const statusLabel = shortStatus(line.status);
+    w(`| ${line.fbompart} | ${(line.fbomdesc || '').slice(0, 30)} | ${line.extendedQty} | ${line.totalSupplied} | ${line.gap} | ${statusLabel} | ${directPos} | ${sysPoStr} | ${onHand} |`);
 
     // Direct-to-JO PO overdue warnings
     const today = new Date().toISOString().slice(0, 10);
@@ -402,7 +413,7 @@ function writeJoSection(
         const dueDate = validDate(po.freqdate) || validDate(po.flstpdate);
         if (dueDate && dueDate < today) {
           const days = Math.floor((Date.now() - new Date(dueDate).getTime()) / 86400000);
-          w(`| | ⚠️ PO ${po.fpono} direct-to-JO, ${po.fordqty - po.frcpqty} open, **${days}d overdue** | | | | | | |`);
+          w(`| | ⚠️ PO ${po.fpono} direct-to-JO, ${po.fordqty - po.frcpqty} open, **${days}d overdue** | | | | | | | |`);
         }
       }
     }
@@ -412,7 +423,7 @@ function writeJoSection(
       for (const po of sys.details.filter(d => d.isOverdue)) {
         const dest = po.fjokey || (po.fcategory === 'SO' ? 'SO' : 'INV');
         const daysStr = po.daysPastDue ? `${po.daysPastDue}d overdue` : 'overdue';
-        w(`| | ⚠️ PO ${po.fpono} → ${dest} (${po.fvendno}) ${po.openQty} open, **${daysStr}** | | | | | | |`);
+        w(`| | ⚠️ PO ${po.fpono} → ${dest} (${po.fvendno}) ${po.openQty} open, **${daysStr}** | | | | | | | |`);
       }
     }
 
@@ -431,19 +442,19 @@ function writeJoSection(
         return `${r.issue_key} (${r.req_status}) ${r.qty}ea${dest}`;
       }).join(', ');
       const more = unique.length > 3 ? ` +${unique.length - 3} more` : '';
-      w(`| | 📋 Req'd but not on PO: ${reqList}${more} | | | | | | |`);
+      w(`| | 📋 Req'd but not on PO: ${reqList}${more} | | | | | | | |`);
     }
 
     // Assembly sub-JO inline callout (detail rendered in separate I JO section)
     const subJo = (line as any).subJo as JoSummary | undefined;
     if (line.status === BomLineStatus.MAKE_NO_JO) {
-      w(`| | 🔴 No I JO found for assembly ${line.fbompart} | | | | | | |`);
+      w(`| | 🔴 No I JO found for assembly ${line.fbompart} | | | | | | | |`);
     } else if (subJo && (line.status === BomLineStatus.MAKE_BLOCKED || line.status === BomLineStatus.MAKE_IN_PROGRESS)) {
       const shortIJo = subJo.fjobno.replace(/-0+$/, '');
       const pct = subJo.totalBomLines > 0 ? Math.round(subJo.completeCount / subJo.totalBomLines * 100) : 0;
       const tag = line.status === BomLineStatus.MAKE_BLOCKED ? '🔴 BLOCKED' : '🟡';
       const subDesc = subJo.fdescript ? ` ${subJo.fdescript}` : '';
-      w(`| | ${tag} See **${shortIJo}**${subDesc}: ${subJo.completeCount}/${subJo.totalBomLines} complete (${pct}%), ${subJo.blindSpotCount} blind spots | | | | | | |`);
+      w(`| | ${tag} See **${shortIJo}**${subDesc}: ${subJo.completeCount}/${subJo.totalBomLines} complete (${pct}%), ${subJo.blindSpotCount} blind spots | | | | | | | |`);
     }
   }
   w('');
@@ -466,6 +477,25 @@ function writeJoSummaryLine(
 function fmtDate(d: string | null): string {
   if (!d) return 'N/A';
   return d.slice(0, 10);
+}
+
+function shortStatus(status: BomLineStatus): string {
+  const map: Record<string, string> = {
+    BLIND_SPOT: '**BLIND**',
+    REQUISITIONED: 'REQ',
+    STOCK_AVAILABLE: 'STOCK',
+    ON_ORDER: 'ON ORDER',
+    PARTIAL: 'PARTIAL',
+    MAKE_BLOCKED: 'ASSY BLK',
+    MAKE_NO_JO: 'NO IJO',
+    MAKE_IN_PROGRESS: 'ASSY WIP',
+    MAKE_COMPLETE: 'ASSY OK',
+    COMPLETE: 'OK',
+    OVERISSUED: 'OVER',
+    PHANTOM: 'PHANTOM',
+    MAKE: 'MAKE',
+  };
+  return map[status] || status;
 }
 
 function validDate(d: string | null): string | null {

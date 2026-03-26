@@ -94,4 +94,4 @@ Jira and Notion are optional — if tokens aren't set, those phases skip gracefu
 
 ## Version
 
-Current: **0.1.0** — see `help.html` for the full reference guide.
+Current: **0.2.0** — see `help.html` for the full reference guide.

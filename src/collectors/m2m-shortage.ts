@@ -219,7 +219,12 @@ function resolveAssemblies(wSummaries: JoSummary[], assemblyMap: Map<string, JoS
       const iJos = assemblyMap.get(line.fbompart);
 
       if (!iJos || iJos.length === 0) {
-        line.status = BomLineStatus.MAKE_NO_JO;
+        // No I JO, but if on-hand covers the gap it's a kitting issue, not a missing assembly
+        if (line.onHandQty >= line.gap && line.gap > 0) {
+          line.status = BomLineStatus.STOCK_AVAILABLE;
+        } else {
+          line.status = BomLineStatus.MAKE_NO_JO;
+        }
         continue;
       }
 
@@ -234,7 +239,12 @@ function resolveAssemblies(wSummaries: JoSummary[], assemblyMap: Map<string, JoS
       (line as any).subJo = bestIJo;
 
       if (bestIJo.blindSpotCount > 0 || bestIJo.makeBlockedCount > 0) {
-        line.status = BomLineStatus.MAKE_BLOCKED;
+        // I JO is blocked, but if on-hand covers the gap we can kit from stock
+        if (line.onHandQty >= line.gap && line.gap > 0) {
+          line.status = BomLineStatus.STOCK_AVAILABLE;
+        } else {
+          line.status = BomLineStatus.MAKE_BLOCKED;
+        }
       } else if (bestIJo.totalBomLines === 0 || bestIJo.completeCount >= bestIJo.totalBomLines) {
         line.status = BomLineStatus.MAKE_COMPLETE;
       } else {
