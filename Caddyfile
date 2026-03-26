@@ -1,4 +1,9 @@
 :80 {
-	root * /srv
-	file_server browse
+	handle_path /wip-snapshot/* {
+		root * /srv
+		file_server browse
+	}
+	handle /wip-snapshot {
+		redir /wip-snapshot/ permanent
+	}
 }
