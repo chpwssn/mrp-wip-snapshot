@@ -116,12 +116,12 @@ export async function syncJiraRequisitions(
   updateSyncDate(db);
   logger.info(`Jira sync complete: ${synced} issues synced (${totalIssues} total matching)`);
 
-  // Flag any XLSX attachments
+  // Log XLSX attachment count for visibility
   const xlsxCount = db.prepare(
     'SELECT COUNT(*) as cnt FROM jira_requisition_attachments WHERE is_xlsx = 1',
   ).get() as { cnt: number };
   if (xlsxCount.cnt > 0) {
-    logger.warn(`Found ${xlsxCount.cnt} XLSX attachment(s) in Jira — parser not yet implemented`);
+    logger.info(`${xlsxCount.cnt} XLSX attachment(s) in cache (will be parsed in attachment phase)`);
   }
 
   return { synced, total: totalIssues };
