@@ -141,40 +141,50 @@ export function generateMarkdownReport(summaries: JoSummary[] & { __ijoSummaries
     w('');
   }
 
+  // Pre-compute which I JOs are shown in later sections (blocked/in-progress assemblies, stock builds with blind spots)
+  const referencedIJoMap = new Map<string, JoSummary>();
+  const referencedIJos = new Set<string>();
+  for (const jo of summaries) {
+    for (const line of jo.bomLines) {
+      const subJo = (line as any).subJo as JoSummary | undefined;
+      if (subJo) {
+        referencedIJos.add(subJo.fjobno);
+        if (line.status === BomLineStatus.MAKE_BLOCKED || line.status === BomLineStatus.MAKE_IN_PROGRESS) {
+          referencedIJoMap.set(subJo.fjobno, subJo);
+        }
+      }
+    }
+  }
+  const shownIJos = new Set<string>([...referencedIJoMap.keys()]);
+  // Stock build I JOs with blind spots (unreferenced + has issues)
+  for (const ijo of allIJos) {
+    if (ijo.blindSpotCount > 0 && !referencedIJos.has(ijo.fjobno) && ijo.totalBomLines > 0) {
+      shownIJos.add(ijo.fjobno);
+    }
+  }
+  // Complete I JOs: everything in allIJos not shown in the problem sections
+  const completeIJos = allIJos
+    .filter(ijo => !shownIJos.has(ijo.fjobno))
+    .sort((a, b) => a.fjobno.localeCompare(b.fjobno));
+
   // No Action Needed (everything not in earlier sections)
   const onOrderJoSet = new Set(onOrderJos.map(j => j.fjobno));
   const allShownJos = new Set([...shownJos, ...onOrderJoSet]);
   const completeJos = sorted.filter(s => !allShownJos.has(s.fjobno));
-  if (completeJos.length > 0) {
-    w(`## No Action Needed (${completeJos.length} JOs)`);
+  const totalNoAction = completeJos.length + completeIJos.length;
+  if (totalNoAction > 0) {
+    const wList = completeJos.map(jo => shortJobNo(jo.fjobno));
+    const iList = completeIJos.map(ijo => `${shortJobNo(ijo.fjobno)} ${ijo.fpartno}`);
+    w(`## No Action Needed (${totalNoAction} JOs)`);
     w('');
-    w(`All BOM lines are complete, overissued, phantom (shop supply), or assemblies done — no shortages or open orders.`);
-    w('');
-    for (const jo of completeJos) {
-      const parts: string[] = [];
-      if (jo.completeCount > 0) parts.push(`${jo.completeCount} complete`);
-      if (jo.overissuedCount > 0) parts.push(`${jo.overissuedCount} overissued`);
-      if (jo.phantomCount > 0) parts.push(`${jo.phantomCount} phantom`);
-      if (jo.makeCompleteCount > 0) parts.push(`${jo.makeCompleteCount} assy done`);
-      const detail = parts.length > 1 ? ` (${parts.join(', ')})` : '';
-      w(`- ${shortJobNo(jo.fjobno)}${detail}`);
-    }
+    if (wList.length > 0) w(wList.join(', '));
+    if (iList.length > 0) w(iList.join(', '));
     w('');
   }
 
   // Internal (I) Job Orders — detail for blocked/in-progress assemblies
-  const iJoMap = new Map<string, JoSummary>();
-  for (const jo of summaries) {
-    for (const line of jo.bomLines) {
-      const subJo = (line as any).subJo as JoSummary | undefined;
-      if (subJo && (line.status === BomLineStatus.MAKE_BLOCKED || line.status === BomLineStatus.MAKE_IN_PROGRESS)) {
-        iJoMap.set(subJo.fjobno, subJo);
-      }
-    }
-  }
-
-  if (iJoMap.size > 0) {
-    const iJos = [...iJoMap.values()].sort((a, b) => a.fjobno.localeCompare(b.fjobno));
+  if (referencedIJoMap.size > 0) {
+    const iJos = [...referencedIJoMap.values()].sort((a, b) => a.fjobno.localeCompare(b.fjobno));
     w(`## Internal Job Orders (Assemblies)`);
     w('');
 
@@ -216,9 +226,9 @@ export function generateMarkdownReport(summaries: JoSummary[] & { __ijoSummaries
         w(`| Part | Description | Need | Have | Gap | Status | POs | On Hand |`);
         w(`|------|-------------|------|------|-----|--------|-----|---------|`);
         for (const iLine of problemLines) {
-          const pos = iLine.poNumbers.length > 0 ? iLine.poNumbers.join(', ') : '—';
+          const pos = formatPoNumbers(iLine);
           const onHand = iLine.onHandQty > 0 ? String(iLine.onHandQty) : '—';
-          w(`| ${iLine.fbompart} | ${(iLine.fbomdesc || '').slice(0, 30)} | ${iLine.extendedQty} | ${iLine.totalSupplied} | ${iLine.gap} | ${iLine.status} | ${pos} | ${onHand} |`);
+          w(`| ${formatPartNumber(iLine)} | ${(iLine.fbomdesc || '').slice(0, 30)} | ${iLine.extendedQty} | ${iLine.totalSupplied} | ${iLine.gap} | ${iLine.status} | ${pos} | ${onHand} |`);
         }
       } else {
         w(`All remaining lines are on order or stock available.`);
@@ -230,14 +240,6 @@ export function generateMarkdownReport(summaries: JoSummary[] & { __ijoSummaries
   // Stock I JOs — internal jobs building inventory that have blind spots
   // Exclude ones already shown in the W JO assembly section
   if (allIJos.length > 0) {
-    const referencedIJos = new Set<string>();
-    for (const jo of summaries) {
-      for (const line of jo.bomLines) {
-        const subJo = (line as any).subJo as JoSummary | undefined;
-        if (subJo) referencedIJos.add(subJo.fjobno);
-      }
-    }
-
     const stockIJos = allIJos
       .filter(ijo =>
         ijo.blindSpotCount > 0 &&
@@ -287,9 +289,9 @@ export function generateMarkdownReport(summaries: JoSummary[] & { __ijoSummaries
           w(`| Part | Description | Need | Have | Gap | Status | POs | On Hand |`);
           w(`|------|-------------|------|------|-----|--------|-----|---------|`);
           for (const iLine of problemLines) {
-            const pos = iLine.poNumbers.length > 0 ? iLine.poNumbers.join(', ') : '—';
+            const pos = formatPoNumbers(iLine);
             const onHand = iLine.onHandQty > 0 ? String(iLine.onHandQty) : '—';
-            w(`| ${iLine.fbompart} | ${(iLine.fbomdesc || '').slice(0, 30)} | ${iLine.extendedQty} | ${iLine.totalSupplied} | ${iLine.gap} | ${iLine.status} | ${pos} | ${onHand} |`);
+            w(`| ${formatPartNumber(iLine)} | ${(iLine.fbomdesc || '').slice(0, 30)} | ${iLine.extendedQty} | ${iLine.totalSupplied} | ${iLine.gap} | ${iLine.status} | ${pos} | ${onHand} |`);
           }
         }
         w('');
@@ -394,7 +396,7 @@ function writeJoSection(
     l.status === BomLineStatus.MAKE_IN_PROGRESS,
   );
   for (const line of filteredLines) {
-    const directPos = line.poNumbers.length > 0 ? line.poNumbers.join(', ') : '—';
+    const directPos = formatPoNumbers(line);
     const sys = (line as any).systemPo as SystemPo | undefined;
     let sysPoStr = '—';
     if (sys && sys.totalOpen > 0) {
@@ -404,7 +406,7 @@ function writeJoSection(
     const onHand = line.onHandQty > 0 ? String(line.onHandQty) : '—';
 
     const statusLabel = shortStatus(line.status);
-    w(`| ${line.fbompart} | ${(line.fbomdesc || '').slice(0, 30)} | ${line.extendedQty} | ${line.totalSupplied} | ${line.gap} | ${statusLabel} | ${directPos} | ${sysPoStr} | ${onHand} |`);
+    w(`| ${formatPartNumber(line)} | ${(line.fbomdesc || '').slice(0, 30)} | ${line.extendedQty} | ${line.totalSupplied} | ${line.gap} | ${statusLabel} | ${directPos} | ${sysPoStr} | ${onHand} |`);
 
     // Direct-to-JO PO overdue warnings
     const today = new Date().toISOString().slice(0, 10);
@@ -496,6 +498,33 @@ function shortStatus(status: BomLineStatus): string {
     MAKE: 'MAKE',
   };
   return map[status] || status;
+}
+
+/** Format PO numbers, striking through exhausted (fully received) POs */
+function formatPoNumbers(line: BomLineAnalysis): string {
+  if (line.poDetails.length === 0) return '—';
+  // Deduplicate by PO number, summing quantities
+  const byPo = new Map<string, { ordered: number; received: number }>();
+  for (const po of line.poDetails) {
+    const key = po.fpono;
+    const existing = byPo.get(key);
+    if (existing) {
+      existing.ordered += po.fordqty;
+      existing.received += po.frcpqty;
+    } else {
+      byPo.set(key, { ordered: po.fordqty, received: po.frcpqty });
+    }
+  }
+  return [...byPo.entries()].map(([pono, { ordered, received }]) => {
+    if (received >= ordered) return `~~${pono}~~`;
+    return pono;
+  }).join(', ');
+}
+
+/** Flag parts not in M2M part master (no INMASTX record) */
+function formatPartNumber(line: BomLineAnalysis): string {
+  if (!line.fgroup && !line.fprodcl) return `${line.fbompart} *`;
+  return line.fbompart;
 }
 
 function validDate(d: string | null): string | null {

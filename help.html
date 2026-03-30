@@ -263,7 +263,7 @@ hr {
 
 <p class="intro">
   This document explains how to read the WIP Shortage Snapshot report, what each section and status means, and where the data comes from. Keep this alongside your printed report during floor walks.
-  <br><strong>Applies to report version 0.2.0</strong> &mdash; check the version in your report header to confirm this guide matches.
+  <br><strong>Applies to report version 0.3.0</strong> &mdash; check the version in your report header to confirm this guide matches.
 </p>
 
 <div class="toc">
@@ -301,6 +301,8 @@ hr {
     <tr><td><strong>PO</strong></td><td>Purchase Order in M2M.</td></tr>
     <tr><td><strong>Sys PO</strong></td><td>System-wide PO &mdash; an open PO for a part anywhere in M2M, regardless of which JO it's routed to. May be routed to inventory, another JO, or an SO.</td></tr>
     <tr><td><strong>&mdash;</strong> (dash)</td><td>No data / zero / not applicable. Used in POs, Sys POs, and On Hand columns when there's nothing to show.</td></tr>
+    <tr><td><strong><del>051234</del></strong> (strikethrough PO)</td><td>An exhausted PO &mdash; fully received but the received quantity didn't cover the BOM need. The PO is historical; the remaining gap has no active coverage.</td></tr>
+    <tr><td><strong>*</strong> (asterisk after part)</td><td>Non-standard part number with no INMASTX record in M2M (no <code>fgroup</code> or <code>fprodcl</code>). Typically a placeholder like "LABEL SET TBD" or a service line item.</td></tr>
     <tr><td><strong>Negative "Have"</strong></td><td>The M2M qty-issued field (<code>fqty_iss</code>) can go negative due to returns or adjustments. This is a data quality issue in M2M, displayed as-is.</td></tr>
     <tr><td><strong>Snapshot #</strong></td><td>Sequential run counter. Each time the collector runs, it creates a new snapshot. Compare snapshots over time to see if shortages are improving or worsening.</td></tr>
   </tbody>
@@ -480,7 +482,7 @@ hr {
     </tr>
     <tr>
       <td><strong>No Action Needed</strong></td>
-      <td>All BOM lines are complete, overissued, phantom, or assembly-done.</td>
+      <td>W JOs and I JOs where all BOM lines are complete, overissued, phantom, or assembly-done. Shown as a compact comma-separated list.</td>
       <td>None &mdash; materials are covered.</td>
     </tr>
     <tr>
@@ -505,17 +507,17 @@ hr {
 
 <div class="card">
   <h4><span class="tag tag-order">ON_ORDER</span></h4>
-  <p>A PO exists routed directly to this JO and the ordered quantity (including what's still in transit) covers the gap. Waiting on delivery.</p>
+  <p>A PO covers the gap. This can be a direct-to-JO PO, or a system-wide PO discovered during enrichment (a line that was initially BLIND_SPOT gets reclassified to ON_ORDER when system POs fully cover the gap). Waiting on delivery.</p>
 </div>
 
 <div class="card">
   <h4><span class="tag tag-order">PARTIAL</span></h4>
-  <p>A PO exists but doesn't fully cover the gap. Some quantity is on order, but more is needed.</p>
+  <p>A PO exists but doesn't fully cover the gap. Some quantity is on order, but more is needed. Lines initially classified as BLIND_SPOT are reclassified to PARTIAL when system-wide POs exist but don't cover the full gap.</p>
 </div>
 
 <div class="card">
   <h4><span class="tag tag-blind">BLIND_SPOT</span></h4>
-  <p>Nothing accounts for this part: not kitted, no PO routed to this JO, no requisition found. This is the core problem the report is designed to surface.</p>
+  <p>Nothing accounts for this part: not kitted, no PO (direct or system-wide), no requisition found. This is the core problem the report is designed to surface. Note: if open system-wide POs exist for the part, the line is automatically reclassified to ON_ORDER or PARTIAL (see below).</p>
 </div>
 
 <div class="card">
@@ -525,7 +527,7 @@ hr {
 
 <div class="card">
   <h4><span class="tag tag-stock">STOCK_AVAILABLE</span></h4>
-  <p>A blind spot where on-hand inventory (from INMASTX.INONHD) could cover the gap. The parts exist in the warehouse but haven't been issued/transferred to this JO. This is a kitting problem, not a supply problem.</p>
+  <p>A blind spot where on-hand inventory (from INMASTX.INONHD) at netable locations could cover the gap. Non-netable locations (8 and 26) are excluded. The parts exist in the warehouse but haven't been issued/transferred to this JO. This is a kitting problem, not a supply problem.</p>
 </div>
 
 <div class="card">
@@ -565,15 +567,15 @@ hr {
     <tr><th>Column</th><th>Meaning</th><th>Source</th></tr>
   </thead>
   <tbody>
-    <tr><td><strong>Part</strong></td><td>Wasson part number (<code>fbompart</code>)</td><td>M2M JODBOM</td></tr>
+    <tr><td><strong>Part</strong></td><td>Wasson part number (<code>fbompart</code>). An asterisk (<code>*</code>) after the part number means the part has no INMASTX record (no <code>fgroup</code> or <code>fprodcl</code>) &mdash; typically a placeholder or non-standard entry like "LABEL SET TBD".</td><td>M2M JODBOM</td></tr>
     <tr><td><strong>Description</strong></td><td>Part description, truncated to 30 characters</td><td>M2M JODBOM</td></tr>
     <tr><td><strong>Need</strong></td><td>Extended quantity: JO quantity &times; BOM per-unit quantity (<code>fquantity &times; factqty</code>)</td><td>M2M JODBOM + JOMAST</td></tr>
     <tr><td><strong>Have</strong></td><td>Total supplied: qty issued from inventory (<code>fqty_iss</code>) + qty received on direct-to-JO POs (<code>&Sigma; POItem.frcpqty</code>)</td><td>M2M JODBOM + POITEM</td></tr>
     <tr><td><strong>Gap</strong></td><td><code>Need - Have - (direct-to-JO PO qty still in transit)</code>. "Still On Order" only counts POs routed directly to this JO, NOT system-wide POs. If positive, this quantity has no plan at the JO level. Check Sys POs and On Hand columns for broader context.</td><td>Calculated</td></tr>
     <tr><td><strong>Status</strong></td><td>Short label for the BOM line status (see table below)</td><td>Calculated</td></tr>
-    <tr><td><strong>POs</strong></td><td>PO numbers routed directly to this JO + BOM item (via <code>fjokey</code> + <code>fjoitm</code>). Shows "&mdash;" if none.</td><td>M2M POITEM (direct)</td></tr>
+    <tr><td><strong>POs</strong></td><td>PO numbers routed directly to this JO + BOM item (via <code>fjokey</code> + <code>fjoitm</code>). Shows "&mdash;" if none. <strong>Strikethrough</strong> (<del>051234</del>) means the PO is exhausted &mdash; fully received but the received quantity didn't cover the need. These POs are historical; the remaining gap has no active coverage.</td><td>M2M POITEM (direct)</td></tr>
     <tr><td><strong>Sys POs</strong></td><td>Total open PO quantity for this part <em>anywhere in the system</em> (all JOs, inventory, SOs). Includes <strong>OVERDUE</strong> flag if past due date.</td><td>M2M POITEM (system-wide)</td></tr>
-    <tr><td><strong>On Hand</strong></td><td>Total on-hand inventory for this part across all locations.</td><td>M2M INMASTX &rarr; INONHD</td></tr>
+    <tr><td><strong>On Hand</strong></td><td>Total on-hand inventory for this part across netable locations. Non-netable locations (8 and 26) are excluded from this count and from STOCK_AVAILABLE classification.</td><td>M2M INMASTX &rarr; INONHD</td></tr>
   </tbody>
 </table>
 
@@ -729,7 +731,7 @@ hr {
 
 <div class="card">
   <h4>On-hand inventory may be committed elsewhere</h4>
-  <p><code>STOCK_AVAILABLE</code> means on-hand qty exists, but that stock may already be earmarked for other JOs. The report cannot see M2M allocations.</p>
+  <p><code>STOCK_AVAILABLE</code> means on-hand qty exists at netable locations (locations 8 and 26 are excluded), but that stock may already be earmarked for other JOs. The report cannot see M2M allocations.</p>
 </div>
 
 <div class="card">
@@ -755,7 +757,7 @@ hr {
 <hr>
 
 <p style="font-size: 12px; color: var(--gray); text-align: center;">
-  WIP Shortage Snapshot v0.2.0 &mdash; Built for Wasson-ECE floor walks<br>
+  WIP Shortage Snapshot v0.3.0 &mdash; Built for Wasson-ECE floor walks<br>
   Report generated by <code>make all</code> &middot; Help: <code>help.html</code> &middot; Data: <code>data/mrp.db</code>
 </p>
 

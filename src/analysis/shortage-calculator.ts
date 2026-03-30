@@ -29,7 +29,8 @@ export function analyzeBomLine(bom: GqlJodbom, joQuantity: number): BomLineAnaly
   const fprodcl = (bom.inmastx?.fprodcl || '').trim();
   const isPhantom = fgroup === 'SUPPLY' || fprodcl === 'SS';
 
-  // Inline on-hand inventory
+  // Inline on-hand inventory (exclude non-netable locations)
+  const NON_NETABLE_LOCATIONS = new Set(['8', '26']);
   const inonhd = bom.inmastx?.inonhd ?? [];
   const onHandDetails = inonhd
     .filter(h => (h.fonhand || 0) > 0)
@@ -38,7 +39,9 @@ export function analyzeBomLine(bom: GqlJodbom, joQuantity: number): BomLineAnaly
       location: (h.flocation || '').trim(),
       bin: (h.fbinno || '').trim(),
     }));
-  const onHandQty = onHandDetails.reduce((s, d) => s + d.qty, 0);
+  const onHandQty = onHandDetails
+    .filter(d => !NON_NETABLE_LOCATIONS.has(d.location))
+    .reduce((s, d) => s + d.qty, 0);
 
   // Two supply paths combined
   const totalSupplied = fqtyIss + poReceivedQty;

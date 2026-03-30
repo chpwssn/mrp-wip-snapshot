@@ -116,14 +116,50 @@ export async function enrichBlindSpotsWithSystemData(
 
   update();
 
-  // Attach to in-memory summaries for the report
-  for (const jo of summaries) {
-    for (const line of jo.bomLines) {
-      if (line.status !== BomLineStatus.BLIND_SPOT && line.status !== BomLineStatus.PARTIAL) continue;
-      const po = poCache.get(line.fbompart);
-      if (po) (line as any).systemPo = po;
+  // Reclassify blind spots that have system POs and update in-memory summaries
+  const reclassifyStmt = db.prepare(`
+    UPDATE bom_line_status SET status = ?
+    WHERE snapshot_id = ? AND fjobno = ? AND fbominum = ?
+  `);
+  const updateJoCounts = db.prepare(`
+    UPDATE jo_summary SET blind_spot_count = ?, on_order_count = ?, partial_count = ?
+    WHERE snapshot_id = ? AND fjobno = ?
+  `);
+
+  const reclassify = db.transaction(() => {
+    for (const jo of summaries) {
+      for (const line of jo.bomLines) {
+        if (line.status !== BomLineStatus.BLIND_SPOT && line.status !== BomLineStatus.PARTIAL) continue;
+        const po = poCache.get(line.fbompart);
+        if (po) (line as any).systemPo = po;
+
+        // Reclassify BLIND_SPOT lines that have open system POs
+        if (line.status === BomLineStatus.BLIND_SPOT && po && po.totalOpen > 0) {
+          const newStatus = po.totalOpen >= line.gap
+            ? BomLineStatus.ON_ORDER
+            : BomLineStatus.PARTIAL;
+          line.status = newStatus;
+          reclassifyStmt.run(newStatus, snapshotId, line.fjobno, line.fbominum);
+        }
+      }
+
+      // Recompute JO-level counts after reclassification
+      let blindSpotCount = 0;
+      let onOrderCount = 0;
+      let partialCount = 0;
+      for (const line of jo.bomLines) {
+        if (line.status === BomLineStatus.BLIND_SPOT) blindSpotCount++;
+        else if (line.status === BomLineStatus.ON_ORDER) onOrderCount++;
+        else if (line.status === BomLineStatus.PARTIAL) partialCount++;
+      }
+      jo.blindSpotCount = blindSpotCount;
+      jo.onOrderCount = onOrderCount;
+      jo.partialCount = partialCount;
+      updateJoCounts.run(blindSpotCount, onOrderCount, partialCount, snapshotId, jo.fjobno);
     }
-  }
+  });
+
+  reclassify();
 
   // Log summary
   let partsWithSystemPos = 0;

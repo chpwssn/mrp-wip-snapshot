@@ -2,6 +2,7 @@ import { loadConfig, isJiraConfigured, isNotionConfigured } from './utils/config
 import { setLogLevel, logger } from './utils/logger.js';
 import { getDb, closeDb } from './db/connection.js';
 import { collectM2mShortages } from './collectors/m2m-shortage.js';
+import type { JoSummary } from './analysis/types.js';
 import { enrichWithNotion } from './collectors/notion-travelers.js';
 import { enrichBlindSpotsWithSystemData } from './collectors/system-enrichment.js';
 import { collectToolTracking, enrichWithToolTracking } from './collectors/tool-tracking.js';
@@ -53,7 +54,9 @@ async function main() {
     const summaries = await collectM2mShortages(config, db, Number(snapshotId));
 
     // Phase 1.5: System-wide PO and inventory enrichment for blind spots
+    const ijoSummaries: JoSummary[] = (summaries as any).__ijoSummaries ?? [];
     await enrichBlindSpotsWithSystemData(config, db, Number(snapshotId), summaries);
+    await enrichBlindSpotsWithSystemData(config, db, Number(snapshotId), ijoSummaries);
 
     // Phase 1.6: The Tool (Order Tracking spreadsheet)
     const toolData = collectToolTracking(db, config);
